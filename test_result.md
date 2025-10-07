@@ -175,6 +175,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ FULLY FUNCTIONAL: OCR text extraction working perfectly! Fixed critical initialization issue (changed from unsupported 'zh' to supported 'en', 'hi' languages). Successfully extracts text from images with 90% confidence. API returns proper JSON structure with extracted_text field. Ready for frontend integration."
+        - working: true
+          agent: "testing"
+          comment: "✅ POST-RESTART VERIFICATION COMPLETE: OCR Text Extraction API (/api/ocr/extract) confirmed fully operational after services restart. Successfully tested with English text extraction achieving 90% confidence. OCR reader properly initialized with languages 'en, hi' as confirmed in logs. API endpoint responding correctly with proper JSON structure including extracted_text and confidence_score fields. Error handling working for invalid base64 inputs. Ready for production use."
   - task: "Image Translation API"
     implemented: true
     working: true
