@@ -11,6 +11,13 @@ import uuid
 from datetime import datetime
 import base64
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import easyocr
+import cv2
+import numpy as np
+from PIL import Image
+import io
+import asyncio
+import threading
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
