@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Any
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://translatrix-5.preview.emergentagent.com/api"
+BACKEND_URL = "https://phototranslate.preview.emergentagent.com/api"
 
 class TranslationAppTester:
     def __init__(self):
