@@ -112,6 +112,77 @@ SUPPORTED_LANGUAGES = [
     {"code": "pa", "name": "Punjabi", "native_name": "ਪੰਜਾਬੀ"}
 ]
 
+# Initialize EasyOCR reader (do this once at startup)
+ocr_reader = None
+
+def initialize_ocr():
+    """Initialize OCR reader with multiple language support"""
+    global ocr_reader
+    try:
+        # Initialize with English and common languages for better performance
+        ocr_reader = easyocr.Reader(['en', 'es', 'fr', 'de', 'zh', 'ja', 'ko', 'ar', 'hi'])
+        logger.info("OCR reader initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize OCR reader: {e}")
+        ocr_reader = None
+
+def preprocess_image_for_ocr(image_array):
+    """Preprocess image to improve OCR accuracy"""
+    try:
+        # Convert to grayscale
+        if len(image_array.shape) == 3:
+            gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image_array
+            
+        # Apply noise reduction
+        denoised = cv2.medianBlur(gray, 3)
+        
+        # Apply sharpening
+        kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+        sharpened = cv2.filter2D(denoised, -1, kernel)
+        
+        return sharpened
+    except Exception as e:
+        logger.error(f"Image preprocessing failed: {e}")
+        return image_array
+
+async def extract_text_from_image(image_base64: str, languages: List[str] = None) -> tuple:
+    """Extract text from base64 image using OCR"""
+    try:
+        if not ocr_reader:
+            raise HTTPException(status_code=500, detail="OCR service not available")
+            
+        # Decode base64 image
+        image_data = base64.b64decode(image_base64)
+        image = Image.open(io.BytesIO(image_data))
+        
+        # Convert PIL image to numpy array for OpenCV
+        image_array = np.array(image)
+        
+        # Preprocess image for better OCR
+        processed_image = preprocess_image_for_ocr(image_array)
+        
+        # Run OCR in a thread to avoid blocking
+        def run_ocr():
+            return ocr_reader.readtext(processed_image, detail=0, paragraph=True)
+        
+        # Run OCR in thread pool to avoid blocking async loop
+        loop = asyncio.get_event_loop()
+        extracted_texts = await loop.run_in_executor(None, run_ocr)
+        
+        # Join all extracted text pieces
+        full_text = " ".join(extracted_texts) if extracted_texts else ""
+        
+        # Estimate confidence (EasyOCR doesn't provide confidence for detail=0)
+        confidence = 0.9 if full_text.strip() else 0.1
+        
+        return full_text, confidence
+        
+    except Exception as e:
+        logger.error(f"OCR extraction error: {e}")
+        raise HTTPException(status_code=500, detail=f"Text extraction failed: {str(e)}")
+
 async def create_llm_chat(session_id: str = "default"):
     """Create LLM chat instance for translation"""
     return LlmChat(
