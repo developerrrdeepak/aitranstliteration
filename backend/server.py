@@ -371,6 +371,114 @@ async def get_conversation_messages(conversation_id: str):
         logger.error(f"Get conversation messages error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# OCR and Image Translation Endpoints
+class OCRResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    extracted_text: str
+    confidence_score: float
+    processing_time: Optional[float] = None
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class ImageOCRRequest(BaseModel):
+    image_base64: str
+    
+@api_router.post("/ocr/extract", response_model=OCRResult)
+async def extract_text_from_image_endpoint(request: ImageOCRRequest):
+    """Extract text from image using OCR"""
+    try:
+        import time
+        start_time = time.time()
+        
+        # Extract text using OCR
+        extracted_text, confidence = await extract_text_from_image(request.image_base64)
+        
+        processing_time = time.time() - start_time
+        
+        # Create OCR result
+        result = OCRResult(
+            extracted_text=extracted_text,
+            confidence_score=confidence,
+            processing_time=processing_time
+        )
+        
+        # Save OCR result to database for history
+        await db.ocr_results.insert_one(result.dict())
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"OCR extraction error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/translate/image", response_model=TranslationResponse)
+async def translate_image_text(request: ImageTranslationRequest):
+    """Extract text from image and translate it"""
+    try:
+        import time
+        start_time = time.time()
+        
+        # First extract text from image
+        extracted_text, ocr_confidence = await extract_text_from_image(request.image_base64)
+        
+        if not extracted_text.strip():
+            raise HTTPException(status_code=400, detail="No text found in image")
+        
+        # Auto-detect source language if needed
+        if request.source_language == "auto":
+            detected_lang = await detect_language(extracted_text)
+            source_lang = detected_lang
+        else:
+            source_lang = request.source_language
+            
+        # Skip translation if source and target are the same
+        if source_lang == request.target_language:
+            translated_text = extracted_text
+            confidence = ocr_confidence
+        else:
+            # Translate the extracted text
+            translated_text, translation_confidence = await translate_text_with_llm(
+                extracted_text, 
+                source_lang, 
+                request.target_language
+            )
+            # Combined confidence is the product of OCR and translation confidence
+            confidence = ocr_confidence * translation_confidence
+        
+        processing_time = time.time() - start_time
+        
+        # Create translation response
+        translation = TranslationResponse(
+            original_text=extracted_text,
+            translated_text=translated_text,
+            source_language=source_lang,
+            target_language=request.target_language,
+            confidence_score=confidence
+        )
+        
+        # Save to database with image translation metadata
+        translation_dict = translation.dict()
+        translation_dict['is_image_translation'] = True
+        translation_dict['ocr_confidence'] = ocr_confidence
+        translation_dict['processing_time'] = processing_time
+        
+        await db.translations.insert_one(translation_dict)
+        
+        return translation
+        
+    except Exception as e:
+        logger.error(f"Image translation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/ocr/history")
+async def get_ocr_history(limit: int = 50):
+    """Get recent OCR extraction history"""
+    try:
+        ocr_results = await db.ocr_results.find().sort("timestamp", -1).limit(limit).to_list(limit)
+        return [OCRResult(**result) for result in ocr_results]
+    except Exception as e:
+        logger.error(f"OCR history retrieval error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Basic health check endpoints from original
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
