@@ -402,6 +402,206 @@ class TranslationAppTester:
         except Exception as e:
             self.log_test("Concurrent Requests", False, f"Concurrency test failed: {str(e)}")
             return False
+
+    def create_test_image_with_text(self, text="Hello World", language="en"):
+        """Create a test image with text for OCR testing"""
+        try:
+            # Create a white image
+            img = Image.new('RGB', (400, 200), color='white')
+            draw = ImageDraw.Draw(img)
+            
+            # Try to use a default font, fallback to basic if not available
+            try:
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+            except:
+                font = ImageFont.load_default()
+            
+            # Draw text on image
+            draw.text((50, 80), text, fill='black', font=font)
+            
+            # Convert to base64
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            return img_base64
+        except Exception as e:
+            print(f"Error creating test image: {e}")
+            return None
+
+    def test_ocr_extract_text(self):
+        """Test Phase 2 OCR text extraction endpoint"""
+        try:
+            # Test with English text
+            test_image = self.create_test_image_with_text("Hello World Testing OCR", "en")
+            if not test_image:
+                self.log_test("OCR Text Extraction", False, "Failed to create test image")
+                return False
+
+            payload = {
+                "image_base64": test_image
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/ocr/extract", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                extracted_text = data.get('extracted_text', '')
+                confidence = data.get('confidence_score', 0)
+                
+                # Check if text was extracted
+                if extracted_text and len(extracted_text.strip()) > 0:
+                    self.log_test("OCR Text Extraction", True, 
+                                f"Extracted: '{extracted_text}', Confidence: {confidence}")
+                    return True
+                else:
+                    self.log_test("OCR Text Extraction", False, 
+                                f"No text extracted. Response: {data}")
+                    return False
+            else:
+                error_detail = response.json().get('detail', 'Unknown error') if response.content else f"HTTP {response.status_code}"
+                self.log_test("OCR Text Extraction", False, 
+                            f"API Error: {error_detail}")
+                return False
+                
+        except Exception as e:
+            self.log_test("OCR Text Extraction", False, f"Exception: {str(e)}")
+            return False
+
+    def test_ocr_with_hindi_text(self):
+        """Test OCR with Hindi text"""
+        try:
+            # Test with Hindi text
+            test_image = self.create_test_image_with_text("नमस्ते दुनिया", "hi")
+            if not test_image:
+                self.log_test("OCR Hindi Text", False, "Failed to create Hindi test image")
+                return False
+
+            payload = {
+                "image_base64": test_image
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/ocr/extract", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                extracted_text = data.get('extracted_text', '')
+                confidence = data.get('confidence_score', 0)
+                
+                self.log_test("OCR Hindi Text", True, 
+                            f"Extracted: '{extracted_text}', Confidence: {confidence}")
+                return True
+            else:
+                error_detail = response.json().get('detail', 'Unknown error') if response.content else f"HTTP {response.status_code}"
+                self.log_test("OCR Hindi Text", False, f"API Error: {error_detail}")
+                return False
+                
+        except Exception as e:
+            self.log_test("OCR Hindi Text", False, f"Exception: {str(e)}")
+            return False
+
+    def test_image_translation_pipeline(self):
+        """Test Phase 2 complete image translation pipeline"""
+        try:
+            # Test with English text to Spanish translation
+            test_image = self.create_test_image_with_text("Good morning everyone", "en")
+            if not test_image:
+                self.log_test("Image Translation Pipeline", False, "Failed to create test image")
+                return False
+
+            payload = {
+                "image_base64": test_image,
+                "source_language": "auto",
+                "target_language": "es"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/translate/image", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                original_text = data.get('original_text', '')
+                translated_text = data.get('translated_text', '')
+                source_lang = data.get('source_language', '')
+                target_lang = data.get('target_language', '')
+                confidence = data.get('confidence_score', 0)
+                
+                if original_text and translated_text:
+                    self.log_test("Image Translation Pipeline", True, 
+                                f"Original: '{original_text}' ({source_lang}) → Translated: '{translated_text}' ({target_lang}), Confidence: {confidence}")
+                    return True
+                else:
+                    self.log_test("Image Translation Pipeline", False, 
+                                f"Missing text in response: {data}")
+                    return False
+            else:
+                error_detail = response.json().get('detail', 'Unknown error') if response.content else f"HTTP {response.status_code}"
+                self.log_test("Image Translation Pipeline", False, 
+                            f"API Error: {error_detail}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Image Translation Pipeline", False, f"Exception: {str(e)}")
+            return False
+
+    def test_image_translation_hindi_to_english(self):
+        """Test image translation from Hindi to English"""
+        try:
+            # Test with Hindi text to English translation
+            test_image = self.create_test_image_with_text("आज मौसम अच्छा है", "hi")
+            if not test_image:
+                self.log_test("Hindi to English Image Translation", False, "Failed to create Hindi test image")
+                return False
+
+            payload = {
+                "image_base64": test_image,
+                "source_language": "hi",
+                "target_language": "en"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/translate/image", json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()
+                original_text = data.get('original_text', '')
+                translated_text = data.get('translated_text', '')
+                confidence = data.get('confidence_score', 0)
+                
+                self.log_test("Hindi to English Image Translation", True, 
+                            f"Original: '{original_text}' → Translated: '{translated_text}', Confidence: {confidence}")
+                return True
+            else:
+                error_detail = response.json().get('detail', 'Unknown error') if response.content else f"HTTP {response.status_code}"
+                self.log_test("Hindi to English Image Translation", False, 
+                            f"API Error: {error_detail}")
+                return False
+                
+        except Exception as e:
+            self.log_test("Hindi to English Image Translation", False, f"Exception: {str(e)}")
+            return False
+
+    def test_ocr_error_handling(self):
+        """Test OCR error handling with invalid data"""
+        try:
+            # Test with invalid base64
+            payload = {
+                "image_base64": "invalid_base64_data"
+            }
+            
+            response = self.session.post(f"{BACKEND_URL}/ocr/extract", json=payload)
+            
+            # Should return error but not crash
+            if response.status_code in [400, 422, 500]:
+                self.log_test("OCR Error Handling", True, 
+                            f"Properly handled invalid input with status {response.status_code}")
+                return True
+            else:
+                self.log_test("OCR Error Handling", False, 
+                            f"Unexpected response to invalid input: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            self.log_test("OCR Error Handling", False, f"Exception: {str(e)}")
+            return False
     
     def run_all_tests(self):
         """Run comprehensive test suite"""
