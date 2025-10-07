@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://lingua-bridge-40.preview.emergentagent.com/api"
+BACKEND_URL = "https://linguapic-2.preview.emergentagent.com/api"
 
 class TranslationAppTester:
     def __init__(self):
