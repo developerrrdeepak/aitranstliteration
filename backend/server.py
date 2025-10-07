@@ -58,6 +58,13 @@ class ConversationMessage(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     is_translated: bool = False
 
+class ConversationMessageRequest(BaseModel):
+    original_text: str
+    source_language: str
+    target_language: Optional[str] = None
+    message_type: str  # "text", "voice", "image"
+    sender_id: str
+
 class VoiceTranslationRequest(BaseModel):
     audio_base64: str
     source_language: Optional[str] = "auto"
