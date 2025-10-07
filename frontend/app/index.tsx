@@ -34,6 +34,8 @@ interface Translation {
 }
 
 export default function TranslationApp() {
+  const router = useRouter();
+  
   // State management
   const [inputText, setInputText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
