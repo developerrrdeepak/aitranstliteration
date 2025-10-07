@@ -10,6 +10,9 @@ import time
 import uuid
 from datetime import datetime
 from typing import Dict, List, Any
+import base64
+from PIL import Image, ImageDraw, ImageFont
+import io
 
 # Backend URL from frontend environment
 BACKEND_URL = "https://phototranslate.preview.emergentagent.com/api"
