@@ -318,7 +318,10 @@ export default function TranslationApp() {
 
           {/* Quick Action Buttons */}
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/camera')}
+            >
               <Ionicons name="camera" size={24} color="#4A90E2" />
               <Text style={styles.actionButtonText}>Camera</Text>
             </TouchableOpacity>
