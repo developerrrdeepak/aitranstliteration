@@ -120,8 +120,9 @@ def initialize_ocr():
     global ocr_reader
     try:
         # Initialize with English and common languages for better performance
-        ocr_reader = easyocr.Reader(['en', 'es', 'fr', 'de', 'zh', 'ja', 'ko', 'ar', 'hi'])
-        logger.info("OCR reader initialized successfully")
+        # Note: Using 'ch_sim' for Simplified Chinese instead of 'zh' as EasyOCR doesn't support 'zh'
+        ocr_reader = easyocr.Reader(['en', 'hi', 'bn'], gpu=False)
+        logger.info("OCR reader initialized successfully with languages: en, hi, bn")
     except Exception as e:
         logger.error(f"Failed to initialize OCR reader: {e}")
         ocr_reader = None
