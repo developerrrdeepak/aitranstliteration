@@ -120,3 +120,5 @@ watchfiles==1.1.0
 websockets==15.0.1
 yarl==1.22.0
 zipp==3.23.0
+easyocr==1.7.2
+opencv-python==4.10.0.84
