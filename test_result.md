@@ -227,6 +227,7 @@ test_plan:
   current_focus:
     - "OCR Text Extraction API"
     - "Image Translation API"
+    - "Camera Translation Interface"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
