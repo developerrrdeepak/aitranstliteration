@@ -241,10 +241,18 @@ async def create_conversation():
     return {"conversation_id": conversation_id}
 
 @api_router.post("/conversation/{conversation_id}/message")
-async def add_conversation_message(conversation_id: str, message: ConversationMessage):
+async def add_conversation_message(conversation_id: str, message_request: ConversationMessageRequest):
     """Add message to conversation"""
     try:
-        message.conversation_id = conversation_id
+        # Create full message object
+        message = ConversationMessage(
+            conversation_id=conversation_id,
+            original_text=message_request.original_text,
+            source_language=message_request.source_language,
+            target_language=message_request.target_language,
+            message_type=message_request.message_type,
+            sender_id=message_request.sender_id
+        )
         
         # Auto-translate if target language is specified
         if message.target_language and message.target_language != message.source_language:
