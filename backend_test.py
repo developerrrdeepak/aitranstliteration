@@ -618,7 +618,12 @@ class TranslationAppTester:
             ("Translation History", self.test_translation_history),
             ("Conversation Management", self.test_conversation_management),
             ("Error Handling", self.test_error_handling),
-            ("Performance & Concurrency", self.test_performance_and_concurrency)
+            ("Performance & Concurrency", self.test_performance_and_concurrency),
+            ("OCR Text Extraction", self.test_ocr_extract_text),
+            ("OCR Hindi Text", self.test_ocr_with_hindi_text),
+            ("Image Translation Pipeline", self.test_image_translation_pipeline),
+            ("Hindi to English Image Translation", self.test_image_translation_hindi_to_english),
+            ("OCR Error Handling", self.test_ocr_error_handling)
         ]
         
         passed_tests = 0
