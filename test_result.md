@@ -208,12 +208,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Basic Text Translation API"
-    - "Language Support API" 
-    - "Translation History API"
-    - "Conversation Management API"
+    - "OCR Text Extraction API"
+    - "Image Translation API"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
