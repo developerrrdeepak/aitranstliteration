@@ -192,6 +192,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "✅ COMPLETE PIPELINE WORKING: Image → OCR → Translation workflow functioning perfectly with 85.5% confidence! Full integration between EasyOCR text extraction and existing LLM translation confirmed. Successfully tested image upload with automatic translation to target language. Ready for production use."
+        - working: true
+          agent: "testing"
+          comment: "✅ POST-RESTART VERIFICATION COMPLETE: Image Translation Pipeline (/api/translate/image) confirmed fully operational after services restart. Successfully tested complete workflow: image → OCR → translation with 85.5% confidence. English to Spanish translation working perfectly ('Good morning everyone' → 'Buenos días a todos.'). Auto language detection functioning correctly. Combined OCR and LLM translation confidence scoring working properly. Full pipeline ready for production use."
 
 frontend:
   - task: "Basic Translation Interface"
